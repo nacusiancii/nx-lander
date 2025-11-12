@@ -1,4 +1,19 @@
-# Welcome to your Lovable project
+# BookTok Hype Hub - Search Engine Landing Pages
+
+**Hackathon Project**: Autonomous AI agent that generates landing pages on demand!
+
+## 🤖 NEW: Autonomous Agent
+
+Generate complete landing pages automatically:
+
+```bash
+pnpm install
+pnpm agent -k YOUR_OPENROUTER_API_KEY
+```
+
+See [AGENT_SETUP.md](./AGENT_SETUP.md) for details.
+
+---
 
 ## Project info
 
