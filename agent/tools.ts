@@ -2,9 +2,36 @@ import fs from 'fs/promises';
 import path from 'path';
 import simpleGit from 'simple-git';
 import { Octokit } from '@octokit/rest';
+import OpenAI from 'openai';
 import { generatePageCode, generateSearchResultsUpdate, generateRouteUpdate } from './templates';
 
 const git = simpleGit();
+
+async function createAIClient(apiKey: string) {
+  return new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: apiKey,
+    defaultHeaders: {
+      'HTTP-Referer': 'https://github.com/booktok-hype-hub',
+      'X-Title': 'BookTok Landing Page Agent'
+    }
+  });
+}
+
+async function callAI(client: OpenAI, model: string, messages: OpenAI.Chat.ChatCompletionMessageParam[], providerOrder: string[] = ['moonshotai/int4']): Promise<string> {
+  const response = await client.chat.completions.create({
+    model,
+    messages,
+    temperature: 0.7,
+    max_tokens: 2048,
+    provider: {
+      order: providerOrder,
+      allow_fallbacks: false
+    }
+  } as any);
+
+  return response.choices[0].message.content || '';
+}
 
 export const tools = [
   {
@@ -217,10 +244,10 @@ export const tools = [
   }
 ];
 
-export async function executeTool(toolName: string, args: any): Promise<any> {
+export async function executeTool(toolName: string, args: any, apiKey?: string): Promise<any> {
   switch (toolName) {
     case 'generate_keywords':
-      return generateKeywords(args.theme);
+      return generateKeywords(args.theme, apiKey);
     
     case 'fetch_book_recommendations':
       return fetchBookRecommendations(args.search_term);
@@ -251,24 +278,44 @@ export async function executeTool(toolName: string, args: any): Promise<any> {
   }
 }
 
-async function generateKeywords(theme: string): Promise<string[]> {
-  // Simple keyword generation based on theme
-  const baseKeywords = theme.toLowerCase().split(' ');
-  const keywords = [
-    theme.toLowerCase(),
-    `${theme} 2025`,
-    `best ${theme}`,
-    `${theme} audiobooks`,
-    `${theme} ebooks`,
-    `top ${theme}`,
-    `popular ${theme}`,
-    `${theme} recommendations`,
-    `listen to ${theme}`,
-    `stream ${theme}`,
-    `${theme} nextory`,
-    `trending ${theme}`
+async function generateKeywords(theme: string, apiKey?: string): Promise<string[]> {
+  if (!apiKey) {
+    throw new Error('API key required for AI-powered keyword generation');
+  }
+
+  const client = await createAIClient(apiKey);
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: 'You are a SEO expert. Generate 8-12 relevant SEO keywords for a book landing page theme. Return only a JSON array of strings, no explanation.'
+    },
+    {
+      role: 'user',
+      content: `Generate SEO keywords for a landing page about "${theme}". Include variations like audiobooks, ebooks, recommendations, trending, etc.`
+    }
   ];
-  return keywords;
+
+  const response = await callAI(client, 'moonshotai/kimi-k2-thinking', messages);
+  try {
+    console.log('AI response for generateKeywords:', response);
+    const keywords = JSON.parse(response);
+    return Array.isArray(keywords) ? keywords : [];
+  } catch (error) {
+    // Fallback to basic keywords if parsing fails
+    console.warn('Failed to parse AI keywords, using fallback');
+    const baseKeywords = theme.toLowerCase().split(' ');
+    return [
+      theme.toLowerCase(),
+      `best ${theme}`,
+      `${theme} audiobooks`,
+      `${theme} ebooks`,
+      `top ${theme}`,
+      `popular ${theme}`,
+      `${theme} recommendations`,
+      `trending ${theme}`
+    ];
+  }
 }
 
 async function fetchBookRecommendations(searchTerm: string): Promise<any[]> {
@@ -310,7 +357,7 @@ async function generateContent(theme: string, keywords: string[], books: any[]):
   };
 }
 
-async function writePageFile(pageName: string, content: any): Promise<{ success: boolean }> {
+async function writePageFile(pageName: string, content: any): Promise<{ success: boolean; path: string }> {
   const code = generatePageCode(pageName, content);
   const filePath = path.join(process.cwd(), 'src', 'pages', `${pageName}.tsx`);
   await fs.writeFile(filePath, code, 'utf-8');
@@ -401,7 +448,7 @@ async function updateSearchResults(
   return { success: true };
 }
 
-async function createGitBranch(branchName: string): Promise<{ success: boolean }> {
+async function createGitBranch(branchName: string): Promise<{ success: boolean; branch: string }> {
   await git.checkoutLocalBranch(branchName);
   return { success: true, branch: branchName };
 }
@@ -414,30 +461,30 @@ async function commitAndPush(commitMessage: string, branchName: string): Promise
   return { success: true };
 }
 
-async function createPullRequest(title: string, body: string, branchName: string): Promise<{ success: boolean }> {
+async function createPullRequest(title: string, body: string, branchName: string): Promise<{ success: boolean; message?: string; pr_url?: string }> {
   const githubToken = process.env.GITHUB_TOKEN;
   if (!githubToken) {
     console.warn('⚠️  GITHUB_TOKEN not set, skipping PR creation');
     return { success: false, message: 'GITHUB_TOKEN not set' };
   }
-  
+
   const octokit = new Octokit({ auth: githubToken });
-  
+
   // Get repo info from git remote
   const remotes = await git.getRemotes(true);
   const origin = remotes.find(r => r.name === 'origin');
   if (!origin?.refs?.push) {
     throw new Error('No origin remote found');
   }
-  
+
   // Parse owner and repo from URL
   const match = origin.refs.push.match(/github\.com[:/](.+?)\/(.+?)(\.git)?$/);
   if (!match) {
     throw new Error('Could not parse GitHub repo from remote');
   }
-  
+
   const [, owner, repo] = match;
-  
+
   const pr = await octokit.pulls.create({
     owner,
     repo: repo.replace('.git', ''),
@@ -446,7 +493,7 @@ async function createPullRequest(title: string, body: string, branchName: string
     head: branchName,
     base: 'main'
   });
-  
+
   return { success: true, pr_url: pr.data.html_url };
 }
 

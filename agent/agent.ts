@@ -68,7 +68,7 @@ Be concise and efficient. Generate production-ready code following the requireme
         order: ['moonshotai/int4'],
         allow_fallbacks: false
       }
-    });
+    } as any);
 
     const assistantMessage = response.choices[0].message;
     messages.push(assistantMessage);
@@ -90,7 +90,7 @@ Be concise and efficient. Generate production-ready code following the requireme
         console.log(`   Args: ${JSON.stringify(toolArgs, null, 2)}`);
         
         try {
-          const result = await executeTool(toolName, toolArgs);
+          const result = await executeTool(toolName, toolArgs, apiKey);
           console.log(`   ✅ Result: ${JSON.stringify(result, null, 2).substring(0, 200)}...`);
           
           messages.push({
