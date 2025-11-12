@@ -256,7 +256,7 @@ export async function executeTool(toolName: string, args: any, apiKey?: string):
       return fetchBookRecommendations(args.search_term);
     
     case 'generate_content':
-      return generateContent(args.theme, args.keywords, args.books);
+      return generateContent(args.theme, args.keywords, args.books, apiKey);
     
     case 'write_page_file':
       return writePageFile(args.page_name, args.content);
@@ -411,30 +411,82 @@ function getFallbackBooks(searchTerm: string): any[] {
   ];
 }
 
-async function generateContent(theme: string, keywords: string[], books: any[]): Promise<any> {
-  const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
-  
-  return {
-    title: `Discover the Best ${capitalizedTheme} on Nextory`,
-    subtitle: `Stream unlimited ${theme} audiobooks and e-books. Start your free 30-day trial today.`,
-    adTitle: `Best ${capitalizedTheme} Audiobooks 2025 - Listen on Nextory`,
-    adDescription: `Discover trending ${theme} everyone is talking about. Unlimited streaming of bestselling ${theme}. Start your free trial today.`,
-    features: [
-      {
-        title: 'Unlimited Access',
-        description: `Listen to thousands of ${theme} audiobooks and e-books`
-      },
-      {
-        title: 'New Releases',
-        description: `Get access to the latest ${theme} as soon as they're released`
-      },
-      {
-        title: 'Offline Listening',
-        description: `Download your favorite ${theme} and listen anywhere`
-      }
-    ],
-    books: books.slice(0, 12)
-  };
+async function generateContent(theme: string, keywords: string[], books: any[], apiKey?: string): Promise<any> {
+  if (!apiKey) {
+    throw new Error('API key required for AI-powered content generation');
+  }
+
+  const client = await createAIClient(apiKey);
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: `You are a marketing copywriter specializing in book landing pages for Nextory (a European audiobook/ebook service).
+Generate compelling content for a landing page about "${theme}" books.
+Return a JSON object with the following structure:
+{
+  "title": "SEO-optimized page title",
+  "subtitle": "Engaging subtitle encouraging free trial signup",
+  "adTitle": "Compelling ad title for sponsored content",
+  "adDescription": "Persuasive ad description highlighting benefits",
+  "features": [
+    {
+      "title": "Feature title",
+      "description": "Feature description"
+    }
+  ],
+  "books": [] // Keep the books array as provided
+}
+Focus on:
+- Scandinavian market (mention free 30-day trial)
+- Unlimited streaming of audiobooks and ebooks
+- Trending/popular content
+- BookTok-style hype and discovery
+- Use the provided keywords naturally in the content`
+    },
+    {
+      role: 'user',
+      content: `Generate landing page content for the theme "${theme}" with these SEO keywords: ${keywords.join(', ')}.
+Available books: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
+
+Create engaging, conversion-focused copy that would appear on a book discovery landing page.`
+    }
+  ];
+
+  const response = await callAI(client, 'moonshotai/kimi-k2-thinking', messages);
+  try {
+    console.log('AI response for generateContent:', response);
+    const content = JSON.parse(response);
+    // Ensure books array is included
+    content.books = books.slice(0, 12);
+    return content;
+  } catch (error) {
+    console.warn('Failed to parse AI content, using fallback');
+    // Fallback to original hardcoded content
+    const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
+
+    return {
+      title: `Discover the Best ${capitalizedTheme} on Nextory`,
+      subtitle: `Stream unlimited ${theme} audiobooks and e-books. Start your free 30-day trial today.`,
+      adTitle: `Best ${capitalizedTheme} Audiobooks 2025 - Listen on Nextory`,
+      adDescription: `Discover trending ${theme} everyone is talking about. Unlimited streaming of bestselling ${theme}. Start your free trial today.`,
+      features: [
+        {
+          title: 'Unlimited Access',
+          description: `Listen to thousands of ${theme} audiobooks and e-books`
+        },
+        {
+          title: 'New Releases',
+          description: `Get access to the latest ${theme} as soon as they're released`
+        },
+        {
+          title: 'Offline Listening',
+          description: `Download your favorite ${theme} and listen anywhere`
+        }
+      ],
+      books: books.slice(0, 12)
+    };
+  }
 }
 
 async function writePageFile(pageName: string, content: any): Promise<{ success: boolean; path: string }> {
