@@ -466,6 +466,8 @@ Create something that feels:
 - Visually engaging (words that paint vivid pictures)
 - Effortlessly inclusive of these themes: ${keywords.join(', ')}
 
+IMPORTANT: Keep content concise and punchy. Short, impactful phrases work better than long descriptions.
+
 Remember: This is their first impression. Make it memorable, not marketing-y. Think discovery and delight!
 
 Context:
@@ -477,7 +479,7 @@ Context:
       role: 'user',
       content: `Create an amazing landing page experience for "${theme}" books. These are some of the incredible titles available: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
 
-Craft content that makes readers excited to explore. Use the submit_content tool to return your results.`
+Craft concise, engaging content that makes readers excited to explore. Keep all text short and impactful. Use the submit_content tool to return your results.`
     }
   ];
 
@@ -492,35 +494,41 @@ Craft content that makes readers excited to explore. Use the submit_content tool
           properties: {
             title: {
               type: 'string',
-              description: 'A captivating, curiosity-sparking headline that makes readers want to know more (think: exciting discovery, not corporate jargon)'
+              description: 'A captivating, curiosity-sparking headline (MAX 60 characters - keep it short and punchy!)'
             },
             subtitle: {
               type: 'string',
-              description: 'An inviting, warm subtitle that feels like a friend sharing something amazing (naturally mentions the free trial as a delightful bonus)'
+              description: 'An inviting, warm subtitle mentioning the free trial (MAX 100 characters - concise and friendly)'
             },
             adTitle: {
               type: 'string',
-              description: 'An intriguing, scroll-stopping title that captures attention with genuine excitement (not salesy)'
+              description: 'An intriguing, scroll-stopping title (MAX 60 characters - not salesy, just exciting)'
             },
             adDescription: {
               type: 'string',
-              description: 'A compelling story-driven description that makes the experience feel irresistible (highlight the joy of discovery)'
+              description: 'A compelling description (MAX 120 characters - short and irresistible)'
             },
             heroGridTitle: {
               type: 'string',
-              description: 'An energetic, BookTok-style section title that builds anticipation (e.g., "Everyone\'s Obsessed With These Books", "Your Next Favorite Read Awaits")'
+              description: 'An energetic, BookTok-style section title (MAX 50 characters - e.g., "Everyone\'s Obsessed With These Books")'
             },
             features: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  title: { type: 'string' },
-                  description: { type: 'string' }
+                  title: { 
+                    type: 'string',
+                    description: 'Feature title (MAX 30 characters)'
+                  },
+                  description: { 
+                    type: 'string',
+                    description: 'Feature description (MAX 80 characters)'
+                  }
                 },
                 required: ['title', 'description']
               },
-              description: 'Array of exactly 3 or 6 feature objects with title and description'
+              description: 'Array of exactly 3 or 6 feature objects with concise title and description'
             }
           },
           required: ['title', 'subtitle', 'adTitle', 'adDescription', 'heroGridTitle', 'features']
@@ -536,7 +544,7 @@ Craft content that makes readers excited to explore. Use the submit_content tool
       tools: tools as any,
       tool_choice: { type: 'function', function: { name: 'submit_content' } } as any,
       temperature: 0.7,
-      max_tokens: 4096,
+      max_tokens: 1536,
       provider: {
         order: ['moonshotai/int4'],
         allow_fallbacks: false
