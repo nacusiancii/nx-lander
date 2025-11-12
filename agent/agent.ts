@@ -67,18 +67,6 @@ Be concise and efficient. Generate production-ready code following the requireme
       provider: {
         order: ['moonshotai/int4'],
         allow_fallbacks: false
-      },
-      extra: {  // ← Change from 'extra' to 'extra_body'
-        provider: {
-          order: ['moonshotai/int4'],
-          allow_fallbacks: false
-        }
-      },
-      extra_body: {  // ← Change from 'extra' to 'extra_body'
-        provider: {
-          order: ['moonshotai/int4'],
-          allow_fallbacks: false
-        }
       }
     });
 
