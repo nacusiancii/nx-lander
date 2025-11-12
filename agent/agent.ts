@@ -64,6 +64,10 @@ Be concise and efficient. Generate production-ready code following the requireme
       tool_choice: 'auto',
       temperature: 0.7,
       max_tokens: 4096,
+      provider: {
+        order: ['moonshotai/int4'],
+        allow_fallbacks: false
+      },
       extra: {  // ← Change from 'extra' to 'extra_body'
         provider: {
           order: ['moonshotai/int4'],
@@ -83,6 +87,10 @@ Be concise and efficient. Generate production-ready code following the requireme
 
     if (assistantMessage.content) {
       console.log(`\n💬 Agent: ${assistantMessage.content}\n`);
+    } else if (assistantMessage.refusal) {
+      console.log(`\n💬 Agent: ${assistantMessage.refusal}\n`);
+    } else {
+      console.log(`\n💬 Agent is empty?: ${assistantMessage.content}\n`);
     }
 
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
