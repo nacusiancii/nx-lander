@@ -20,17 +20,46 @@ const ${pageName} = () => {
       <Header />
       <main>
         {/* Hero Section */}
-        <section className="py-20 px-4 text-center bg-gradient-to-b from-primary/10 to-background">
+        <section className="py-12 md:py-20 px-4 bg-gradient-to-b from-primary/10 to-background">
           <div className="container mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-              ${content.title}
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              ${content.subtitle}
-            </p>
-            <Button size="lg" className="text-lg px-8 py-6">
-              Start Free 30-Day Trial
-            </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Left side - Text content */}
+              <div className="text-left">
+                <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
+                  ${content.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+                  ${content.subtitle}
+                </p>
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Start Free 30-Day Trial
+                </Button>
+                <p className="text-sm text-muted-foreground mt-4">
+                  14 days free • Cancel anytime
+                </p>
+              </div>
+
+              {/* Right side - Book covers grid */}
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg p-6 md:p-8">
+                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-primary">
+                  ${content.heroGridTitle || 'MOST POPULAR BOOKS'}
+                </h2>
+                <div className="grid grid-cols-3 gap-3 md:gap-4">
+                  {books.slice(0, 6).map((book) => (
+                    <div
+                      key={book.id}
+                      className="aspect-[2/3] relative overflow-hidden rounded-md shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <img
+                        src={book.cover}
+                        alt={\`\${book.title} by \${book.author}\`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

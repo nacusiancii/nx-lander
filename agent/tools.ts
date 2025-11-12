@@ -500,6 +500,10 @@ Create engaging, conversion-focused copy that would appear on a book discovery l
               type: 'string',
               description: 'Persuasive ad description highlighting benefits'
             },
+            heroGridTitle: {
+              type: 'string',
+              description: 'Title for the hero book grid section (e.g., "Most Popular BookTok Books", "Trending Romance Reads")'
+            },
             features: {
               type: 'array',
               items: {
@@ -510,10 +514,10 @@ Create engaging, conversion-focused copy that would appear on a book discovery l
                 },
                 required: ['title', 'description']
               },
-              description: 'Array of 3-4 feature objects with title and description'
+              description: 'Array of exactly 3 or 6 feature objects with title and description'
             }
           },
-          required: ['title', 'subtitle', 'adTitle', 'adDescription', 'features']
+          required: ['title', 'subtitle', 'adTitle', 'adDescription', 'heroGridTitle', 'features']
         }
       }
     }
@@ -537,6 +541,19 @@ Create engaging, conversion-focused copy that would appear on a book discovery l
     if (toolCall && toolCall.function.name === 'submit_content') {
       const content = JSON.parse(toolCall.function.arguments);
       console.log('AI generated content via tool call:', content);
+      
+      // Validate that features array has exactly 3 or 6 items
+      if (content.features && Array.isArray(content.features)) {
+        const featureCount = content.features.length;
+        if (featureCount !== 3 && featureCount !== 6) {
+          console.warn(`AI generated ${featureCount} features, but only 3 or 6 are allowed. Adjusting...`);
+          // If less than 3, keep all; if between 3-6, trim to 3; if more than 6, trim to 6
+          content.features = featureCount < 3 ? content.features : 
+                            featureCount <= 5 ? content.features.slice(0, 3) :
+                            content.features.slice(0, 6);
+        }
+      }
+      
       // Ensure books array is included
       content.books = books.slice(0, 12);
       return content;
@@ -553,6 +570,7 @@ Create engaging, conversion-focused copy that would appear on a book discovery l
       subtitle: `Stream unlimited ${theme} audiobooks and e-books. Start your free 30-day trial today.`,
       adTitle: `Best ${capitalizedTheme} Audiobooks 2025 - Listen on Nextory`,
       adDescription: `Discover trending ${theme} everyone is talking about. Unlimited streaming of bestselling ${theme}. Start your free trial today.`,
+      heroGridTitle: `Most Popular ${capitalizedTheme}`,
       features: [
         {
           title: 'Unlimited Access',
