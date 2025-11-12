@@ -26,7 +26,7 @@ async function callAI(client: OpenAI, model: string, messages: OpenAI.Chat.ChatC
     model,
     messages,
     temperature: 0.7,
-    max_tokens: 2048,
+    max_tokens: 4096,
     provider: {
       order: providerOrder,
       allow_fallbacks: false
@@ -291,23 +291,59 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: 'You are a SEO expert. Generate 8-12 relevant SEO keywords for a book landing page theme. Return only a JSON array of strings, no explanation.'
+      content: 'You are a SEO expert. Generate 8-12 relevant SEO keywords for a book landing page theme.'
     },
     {
       role: 'user',
-      content: `Generate SEO keywords for a landing page about "${theme}". Include variations like audiobooks, ebooks, recommendations, trending, etc.`
+      content: `Generate SEO keywords for a landing page about "${theme}". Include variations like audiobooks, ebooks, recommendations, trending, etc. Use the submit_keywords tool to return your results.`
     }
   ];
 
-  const response = await callAI(client, 'moonshotai/kimi-k2-thinking', messages);
+  const tools = [
+    {
+      type: 'function',
+      function: {
+        name: 'submit_keywords',
+        description: 'Submit the generated SEO keywords',
+        parameters: {
+          type: 'object',
+          properties: {
+            keywords: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Array of 8-12 SEO keywords'
+            }
+          },
+          required: ['keywords']
+        }
+      }
+    }
+  ];
+
   try {
-    console.log('AI response for generateKeywords:', response);
-    const keywords = JSON.parse(response);
-    return Array.isArray(keywords) ? keywords : [];
+    const response = await client.chat.completions.create({
+      model: 'moonshotai/kimi-k2-thinking',
+      messages,
+      tools: tools as any,
+      tool_choice: { type: 'function', function: { name: 'submit_keywords' } } as any,
+      temperature: 0.7,
+      provider: {
+        order: ['moonshotai/int4'],
+        allow_fallbacks: false
+      }
+    } as any);
+
+    const toolCall = response.choices[0].message.tool_calls?.[0];
+    if (toolCall && toolCall.function.name === 'submit_keywords') {
+      const args = JSON.parse(toolCall.function.arguments);
+      console.log('AI generated keywords via tool call:', args.keywords);
+      return Array.isArray(args.keywords) ? args.keywords : [];
+    }
+
+    throw new Error('No tool call found in response');
   } catch (error) {
     // Fallback to basic keywords if parsing fails
-    console.warn('Failed to parse AI keywords, using fallback');
-    const baseKeywords = theme.toLowerCase().split(' ');
+    console.warn('Failed to get AI keywords via tool call, using fallback:', error);
     return [
       theme.toLowerCase(),
       `best ${theme}`,
@@ -423,20 +459,6 @@ async function generateContent(theme: string, keywords: string[], books: any[], 
       role: 'system',
       content: `You are a marketing copywriter specializing in book landing pages for Nextory (a European audiobook/ebook service).
 Generate compelling content for a landing page about "${theme}" books.
-Return a JSON object with the following structure:
-{
-  "title": "SEO-optimized page title",
-  "subtitle": "Engaging subtitle encouraging free trial signup",
-  "adTitle": "Compelling ad title for sponsored content",
-  "adDescription": "Persuasive ad description highlighting benefits",
-  "features": [
-    {
-      "title": "Feature title",
-      "description": "Feature description"
-    }
-  ],
-  "books": [] // Keep the books array as provided
-}
 Focus on:
 - Scandinavian market (mention free 30-day trial)
 - Unlimited streaming of audiobooks and ebooks
@@ -449,19 +471,80 @@ Focus on:
       content: `Generate landing page content for the theme "${theme}" with these SEO keywords: ${keywords.join(', ')}.
 Available books: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
 
-Create engaging, conversion-focused copy that would appear on a book discovery landing page.`
+Create engaging, conversion-focused copy that would appear on a book discovery landing page. Use the submit_content tool to return your results.`
     }
   ];
 
-  const response = await callAI(client, 'moonshotai/kimi-k2-thinking', messages);
+  const tools = [
+    {
+      type: 'function',
+      function: {
+        name: 'submit_content',
+        description: 'Submit the generated landing page content',
+        parameters: {
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              description: 'SEO-optimized page title'
+            },
+            subtitle: {
+              type: 'string',
+              description: 'Engaging subtitle encouraging free trial signup'
+            },
+            adTitle: {
+              type: 'string',
+              description: 'Compelling ad title for sponsored content'
+            },
+            adDescription: {
+              type: 'string',
+              description: 'Persuasive ad description highlighting benefits'
+            },
+            features: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  description: { type: 'string' }
+                },
+                required: ['title', 'description']
+              },
+              description: 'Array of 3-4 feature objects with title and description'
+            }
+          },
+          required: ['title', 'subtitle', 'adTitle', 'adDescription', 'features']
+        }
+      }
+    }
+  ];
+
   try {
-    console.log('AI response for generateContent:', response);
-    const content = JSON.parse(response);
-    // Ensure books array is included
-    content.books = books.slice(0, 12);
-    return content;
+    const response = await client.chat.completions.create({
+      model: 'moonshotai/kimi-k2-thinking',
+      messages,
+      tools: tools as any,
+      tool_choice: { type: 'function', function: { name: 'submit_content' } } as any,
+      temperature: 0.7,
+      max_tokens: 4096,
+      provider: {
+        order: ['moonshotai/int4'],
+        allow_fallbacks: false
+      }
+    } as any);
+
+    const toolCall = response.choices[0].message.tool_calls?.[0];
+    if (toolCall && toolCall.function.name === 'submit_content') {
+      const content = JSON.parse(toolCall.function.arguments);
+      console.log('AI generated content via tool call:', content);
+      // Ensure books array is included
+      content.books = books.slice(0, 12);
+      return content;
+    }
+
+    throw new Error('No tool call found in response');
   } catch (error) {
-    console.warn('Failed to parse AI content, using fallback');
+    console.warn('Failed to get AI content via tool call, using fallback:', error);
     // Fallback to original hardcoded content
     const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
 
