@@ -20,8 +20,8 @@ const ${pageName} = () => {
       <Header />
       <main>
         {/* Hero Section */}
-        <section className="py-12 md:py-20 px-4 bg-gradient-to-b from-primary/10 to-background">
-          <div className="container mx-auto">
+        <section className="py-32 md:py-48 px-4 bg-background/95">
+          <div className="container mx-auto max-w-6xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               {/* Left side - Text content */}
               <div className="text-left">
@@ -40,8 +40,8 @@ const ${pageName} = () => {
               </div>
 
               {/* Right side - Book covers grid */}
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg p-6 md:p-8">
-                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-primary">
+              <div className="bg-red-700 rounded-lg p-6 md:p-8">
+                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-white">
                   ${content.heroGridTitle || 'MOST POPULAR BOOKS'}
                 </h2>
                 <div className="grid grid-cols-3 gap-3 md:gap-4">

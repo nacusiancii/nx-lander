@@ -457,21 +457,27 @@ async function generateContent(theme: string, keywords: string[], books: any[], 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: `You are a marketing copywriter specializing in book landing pages for Nextory (a European audiobook/ebook service).
-Generate compelling content for a landing page about "${theme}" books.
-Focus on:
-- Scandinavian market (mention free 30-day trial)
+      content: `You are a creative storyteller crafting an amazing landing page experience for Nextory (a European audiobook/ebook service).
+Your goal is to create content that excites book lovers and makes them genuinely curious about "${theme}" books.
+
+Create something that feels:
+- Fresh and exciting (BookTok-style energy and authenticity)
+- Personally inviting (like recommending books to a friend)
+- Visually engaging (words that paint vivid pictures)
+- Effortlessly inclusive of these themes: ${keywords.join(', ')}
+
+Remember: This is their first impression. Make it memorable, not marketing-y. Think discovery and delight!
+
+Context:
+- Free 30-day trial available
 - Unlimited streaming of audiobooks and ebooks
-- Trending/popular content
-- BookTok-style hype and discovery
-- Use the provided keywords naturally in the content`
+- Popular in Scandinavian markets, growing in many other european markets`
     },
     {
       role: 'user',
-      content: `Generate landing page content for the theme "${theme}" with these SEO keywords: ${keywords.join(', ')}.
-Available books: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
+      content: `Create an amazing landing page experience for "${theme}" books. These are some of the incredible titles available: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
 
-Create engaging, conversion-focused copy that would appear on a book discovery landing page. Use the submit_content tool to return your results.`
+Craft content that makes readers excited to explore. Use the submit_content tool to return your results.`
     }
   ];
 
@@ -486,23 +492,23 @@ Create engaging, conversion-focused copy that would appear on a book discovery l
           properties: {
             title: {
               type: 'string',
-              description: 'SEO-optimized page title'
+              description: 'A captivating, curiosity-sparking headline that makes readers want to know more (think: exciting discovery, not corporate jargon)'
             },
             subtitle: {
               type: 'string',
-              description: 'Engaging subtitle encouraging free trial signup'
+              description: 'An inviting, warm subtitle that feels like a friend sharing something amazing (naturally mentions the free trial as a delightful bonus)'
             },
             adTitle: {
               type: 'string',
-              description: 'Compelling ad title for sponsored content'
+              description: 'An intriguing, scroll-stopping title that captures attention with genuine excitement (not salesy)'
             },
             adDescription: {
               type: 'string',
-              description: 'Persuasive ad description highlighting benefits'
+              description: 'A compelling story-driven description that makes the experience feel irresistible (highlight the joy of discovery)'
             },
             heroGridTitle: {
               type: 'string',
-              description: 'Title for the hero book grid section (e.g., "Most Popular BookTok Books", "Trending Romance Reads")'
+              description: 'An energetic, BookTok-style section title that builds anticipation (e.g., "Everyone\'s Obsessed With These Books", "Your Next Favorite Read Awaits")'
             },
             features: {
               type: 'array',
