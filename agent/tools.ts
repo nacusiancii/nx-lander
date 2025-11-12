@@ -335,6 +335,12 @@ async function fetchBookRecommendations(searchTerm: string): Promise<any[]> {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'x-app-version': '52.102',
+        'x-application-id': '203',
+        'x-country-code': 'SE',
+        'x-device-id': '2ad15bd7-28a5-41ae-a3a9-35087b9ad077',
+        'x-locale': 'sv_SE',
+        'x-model': 'web',
       },
     });
 
