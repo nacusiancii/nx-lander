@@ -5,6 +5,9 @@ import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
 import { generatePageCode, generateSearchResultsUpdate, generateRouteUpdate } from './templates';
 
+// Node.js 18+ has built-in fetch
+const fetch = globalThis.fetch;
+
 const git = simpleGit();
 
 async function createAIClient(apiKey: string) {
@@ -319,8 +322,79 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
 }
 
 async function fetchBookRecommendations(searchTerm: string): Promise<any[]> {
-  // Mock implementation - in real scenario would call actual API
-  // For demo, return placeholder books
+  try {
+    // Create a more descriptive search term for better results
+    const descriptiveSearchTerm = `${searchTerm} books`;
+    const encodedSearchTerm = encodeURIComponent(descriptiveSearchTerm);
+    const apiUrl = `https://apistaging.nextory.com/discovery/v1/search/products/books?search_phrase=${encodedSearchTerm}&page=0&per=12&format=ebook,audiobook&sort=relevance`;
+
+    console.log(`Fetching book recommendations from: ${apiUrl}`);
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.products || !Array.isArray(data.products)) {
+      console.warn('API response does not contain products array, falling back to mock data');
+      console.warn('Response structure:', Object.keys(data));
+      return getFallbackBooks(searchTerm);
+    }
+
+    if (data.products.length === 0) {
+      console.warn('API returned empty products array, falling back to mock data');
+      return getFallbackBooks(searchTerm);
+    }
+
+    // Transform API response to match expected format
+    const books = data.products.slice(0, 12).map((product: any) => {
+      // Extract first author name
+      const author = product.authors && product.authors.length > 0
+        ? product.authors[0].name
+        : 'Unknown Author';
+
+      // Extract cover image URL - prefer formats with images
+      let cover = '/book-covers/placeholder.svg';
+      if (product.formats && product.formats.length > 0) {
+        // Find the first format that has an img_url
+        const formatWithImage = product.formats.find((format: any) => format.img_url);
+        if (formatWithImage?.img_url) {
+          // Remove query parameters and use default size
+          cover = formatWithImage.img_url.split('?')[0];
+        }
+      }
+
+      return {
+        id: product.id,
+        title: product.title || 'Unknown Title',
+        author,
+        cover,
+        // Optional: include additional metadata that might be useful
+        rating: product.average_rating || 0,
+        ratings_count: product.number_of_rates || 0,
+      };
+    });
+
+    console.log(`Successfully fetched ${books.length} book recommendations`);
+    return books;
+
+  } catch (error) {
+    console.error('Error fetching book recommendations:', error);
+    console.log('Falling back to mock data');
+    return getFallbackBooks(searchTerm);
+  }
+}
+
+function getFallbackBooks(searchTerm: string): any[] {
   return [
     { id: 1, title: `Popular ${searchTerm} Book 1`, author: 'Author One', cover: '/book-covers/placeholder.svg' },
     { id: 2, title: `Popular ${searchTerm} Book 2`, author: 'Author Two', cover: '/book-covers/placeholder.svg' },
