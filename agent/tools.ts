@@ -4,6 +4,7 @@ import simpleGit from 'simple-git';
 import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
 import { generatePageCode, generateSearchResultsUpdate, generateRouteUpdate } from './templates';
+import { prompts, toolDefinitions } from './prompts';
 
 // Node.js 18+ has built-in fetch
 const fetch = globalThis.fetch;
@@ -291,34 +292,15 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: 'You are a SEO expert. Generate 8-12 relevant SEO keywords for a book landing page theme.'
+      content: prompts.keywordGeneration.system
     },
     {
       role: 'user',
-      content: `Generate SEO keywords for a landing page about "${theme}". Include variations like audiobooks, ebooks, recommendations, trending, etc. Use the submit_keywords tool to return your results.`
+      content: prompts.keywordGeneration.user(theme)
     }
   ];
 
-  const tools = [
-    {
-      type: 'function',
-      function: {
-        name: 'submit_keywords',
-        description: 'Submit the generated SEO keywords',
-        parameters: {
-          type: 'object',
-          properties: {
-            keywords: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Array of 8-12 SEO keywords'
-            }
-          },
-          required: ['keywords']
-        }
-      }
-    }
-  ];
+  const tools = toolDefinitions.filter(tool => tool.function.name === 'submit_keywords');
 
   try {
     const response = await client.chat.completions.create({
@@ -342,17 +324,22 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
 
     throw new Error('No tool call found in response');
   } catch (error) {
-    // Fallback to basic keywords if parsing fails
+    // Fallback to strategic keywords if AI fails
     console.warn('Failed to get AI keywords via tool call, using fallback:', error);
+    const themeLower = theme.toLowerCase();
     return [
-      theme.toLowerCase(),
-      `best ${theme}`,
-      `${theme} audiobooks`,
-      `${theme} ebooks`,
-      `top ${theme}`,
-      `popular ${theme}`,
-      `${theme} recommendations`,
-      `trending ${theme}`
+      themeLower,
+      `best ${themeLower} books`,
+      `${themeLower} audiobooks`,
+      `${themeLower} ebooks unlimited`,
+      `top ${themeLower} 2025`,
+      `trending ${themeLower} books`,
+      `${themeLower} book recommendations`,
+      `unlimited ${themeLower} streaming`,
+      `${themeLower} for families`,
+      `${themeLower} free trial`,
+      `best ${themeLower} audible alternative`,
+      `${themeLower} books everyone's reading`
     ];
   }
 }
@@ -457,85 +444,15 @@ async function generateContent(theme: string, keywords: string[], books: any[], 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: `You are a creative storyteller crafting an amazing landing page experience for Nextory (a European audiobook/ebook service).
-Your goal is to create content that excites book lovers and makes them genuinely curious about "${theme}" books.
-
-Create something that feels:
-- Fresh and exciting (BookTok-style energy and authenticity)
-- Personally inviting (like recommending books to a friend)
-- Visually engaging (words that paint vivid pictures)
-- Effortlessly inclusive of these themes: ${keywords.join(', ')}
-
-IMPORTANT: Keep content concise and punchy. Short, impactful phrases work better than long descriptions.
-
-Remember: This is their first impression. Make it memorable, not marketing-y. Think discovery and delight!
-
-Context:
-- Free 30-day trial available
-- Unlimited streaming of audiobooks and ebooks
-- Popular in Scandinavian markets, growing in many other european markets`
+      content: prompts.contentGeneration.system(keywords)
     },
     {
       role: 'user',
-      content: `Create an amazing landing page experience for "${theme}" books. These are some of the incredible titles available: ${books.slice(0, 6).map(b => `"${b.title}" by ${b.author}`).join(', ')}.
-
-Craft concise, engaging content that makes readers excited to explore. Keep all text short and impactful. Use the submit_content tool to return your results.`
+      content: prompts.contentGeneration.user(theme, books)
     }
   ];
 
-  const tools = [
-    {
-      type: 'function',
-      function: {
-        name: 'submit_content',
-        description: 'Submit the generated landing page content',
-        parameters: {
-          type: 'object',
-          properties: {
-            title: {
-              type: 'string',
-              description: 'A captivating, curiosity-sparking headline (MAX 60 characters - keep it short and punchy!)'
-            },
-            subtitle: {
-              type: 'string',
-              description: 'An inviting, warm subtitle mentioning the free trial (MAX 100 characters - concise and friendly)'
-            },
-            adTitle: {
-              type: 'string',
-              description: 'An intriguing, scroll-stopping title (MAX 60 characters - not salesy, just exciting)'
-            },
-            adDescription: {
-              type: 'string',
-              description: 'A compelling description (MAX 120 characters - short and irresistible)'
-            },
-            heroGridTitle: {
-              type: 'string',
-              description: 'An energetic, BookTok-style section title (MAX 50 characters - e.g., "Everyone\'s Obsessed With These Books")'
-            },
-            features: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  title: { 
-                    type: 'string',
-                    description: 'Feature title (MAX 30 characters)'
-                  },
-                  description: { 
-                    type: 'string',
-                    description: 'Feature description (MAX 80 characters)'
-                  }
-                },
-                required: ['title', 'description']
-              },
-              description: 'Array of exactly 3 or 6 feature objects with concise title and description'
-            }
-          },
-          required: ['title', 'subtitle', 'adTitle', 'adDescription', 'heroGridTitle', 'features']
-        }
-      }
-    }
-  ];
+  const tools = toolDefinitions.filter(tool => tool.function.name === 'submit_content');
 
   try {
     const response = await client.chat.completions.create({
@@ -576,27 +493,27 @@ Craft concise, engaging content that makes readers excited to explore. Keep all 
     throw new Error('No tool call found in response');
   } catch (error) {
     console.warn('Failed to get AI content via tool call, using fallback:', error);
-    // Fallback to original hardcoded content
+    // Fallback content with Nextory brand voice
     const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
 
     return {
-      title: `Discover the Best ${capitalizedTheme} on Nextory`,
-      subtitle: `Stream unlimited ${theme} audiobooks and e-books. Start your free 30-day trial today.`,
-      adTitle: `Best ${capitalizedTheme} Audiobooks 2025 - Listen on Nextory`,
-      adDescription: `Discover trending ${theme} everyone is talking about. Unlimited streaming of bestselling ${theme}. Start your free trial today.`,
-      heroGridTitle: `Most Popular ${capitalizedTheme}`,
+      title: `${capitalizedTheme} Books That Hit Different`,
+      subtitle: `Unlimited ${theme}. One family plan. Start your free trial today.`,
+      adTitle: `Best ${capitalizedTheme} 2025 - Unlimited Streaming on Nextory`,
+      adDescription: `Trending ${theme} everyone's reading. No credits, just unlimited books. Perfect for families. Try free today.`,
+      heroGridTitle: `Everyone's Reading These ${capitalizedTheme}`,
       features: [
         {
-          title: 'Unlimited Access',
-          description: `Listen to thousands of ${theme} audiobooks and e-books`
+          title: 'True Unlimited',
+          description: 'No credits, no limits. Just unlimited books & magazines for one price'
         },
         {
-          title: 'New Releases',
-          description: `Get access to the latest ${theme} as soon as they're released`
+          title: 'Family-Friendly',
+          description: '4 profiles, 2-4 simultaneous users. Perfect for the whole family'
         },
         {
-          title: 'Offline Listening',
-          description: `Download your favorite ${theme} and listen anywhere`
+          title: 'Read Anywhere',
+          description: 'Download and listen offline. Perfect for commutes and travel'
         }
       ],
       books: books.slice(0, 12)

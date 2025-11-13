@@ -32,10 +32,10 @@ const ${pageName} = () => {
                   ${content.subtitle}
                 </p>
                 <Button size="lg" className="text-lg px-8 py-6">
-                  Start Free 30-Day Trial
+                  Start Free Trial
                 </Button>
                 <p className="text-sm text-muted-foreground mt-4">
-                  14 days free • Cancel anytime
+                  14 day trial • 30 hours free • Cancel anytime • No credit card required
                 </p>
               </div>
 
@@ -66,9 +66,13 @@ const ${pageName} = () => {
         {/* Features Section */}
         <section className="py-16 px-4 bg-muted/30">
           <div className="container mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">
               Why Choose Nextory
             </h2>
+            <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+              Unlimited audiobooks, ebooks & magazines. One subscription for the whole family. 
+              No credits, no limits—just pure reading joy.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature: any, idx: number) => (
                 <Card key={idx} className="p-6 text-center hover:shadow-lg transition-shadow">
@@ -115,16 +119,20 @@ const ${pageName} = () => {
 
         {/* CTA Section */}
         <section className="py-20 px-4 bg-primary text-primary-foreground text-center">
-          <div className="container mx-auto">
+          <div className="container mx-auto max-w-4xl">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Ready to Start Listening?
+              Don't Follow the Feed, Feed Your Brain
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              Join thousands of readers enjoying unlimited audiobooks and e-books
+              Join millions across Europe discovering unlimited books & magazines. 
+              Perfect for families. No credit card needed.
             </p>
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
-              Try Free for 30 Days
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6 mb-4">
+              Start Your Free Trial
             </Button>
+            <p className="text-sm opacity-75">
+              14 days • 30 hours free listening • Family plans from €23/month • Cancel anytime
+            </p>
           </div>
         </section>
       </main>

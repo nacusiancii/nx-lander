@@ -2,6 +2,7 @@
 import OpenAI from 'openai';
 import * as readline from 'readline';
 import { tools, executeTool } from './tools';
+import { prompts } from './prompts';
 import simpleGit from 'simple-git';
 
 const rl = readline.createInterface({
@@ -32,17 +33,7 @@ async function runAgent(apiKey: string) {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: `You are an autonomous landing page generator agent. Your goal is to:
-1. Analyze the user's landing page idea
-2. Generate SEO keywords (8-12 terms)
-3. Fetch book recommendations
-4. Generate page content (title, subtitle, ad copy, features)
-5. Generate all necessary code files
-6. Create a git branch and push code
-7. Create a pull request
-
-Use the provided tools to accomplish these tasks. Work step by step and use tools in sequence.
-Be concise and efficient. Generate production-ready code following the requirements document patterns.`
+      content: prompts.agentSystem
     },
     {
       role: 'user',
