@@ -5,6 +5,9 @@ import { tools, executeTool } from './tools';
 import { prompts } from './prompts';
 import simpleGit from 'simple-git';
 
+export const GLOBAL_AI_MODEL = 'moonshotai/kimi-k2-thinking';
+export const GLOBAL_AI_PROVIDER = 'google-vertex';
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -49,14 +52,14 @@ async function runAgent(apiKey: string) {
     iterations++;
     
     const response = await client.chat.completions.create({
-      model: 'moonshotai/kimi-k2-thinking',
+      model: GLOBAL_AI_MODEL,
       messages: messages,
       tools: tools as any,
       tool_choice: 'auto',
       temperature: 0.7,
       max_tokens: 4096,
       provider: {
-        order: ['google-vertex'],
+        order: [GLOBAL_AI_PROVIDER],
         allow_fallbacks: false
       }
     } as any);

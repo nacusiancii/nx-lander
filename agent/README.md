@@ -1,12 +1,15 @@
-# 🤖 Autonomous Landing Page Agent
+# 🤖 Nextory Landing Page Agent
 
-An AI-powered agent that automatically creates, codes, and deploys landing pages for BookTok Hype Hub.
+An AI-powered agent that automatically creates, codes, and deploys landing pages for Nextory.
 
 ## Quick Start
 
 ```bash
 # Install dependencies
 pnpm install
+
+# Run the website
+pnpm dev
 
 # Run the agent
 pnpm agent -k YOUR_OPENROUTER_API_KEY
@@ -58,6 +61,7 @@ $ pnpm agent -k sk-or-v1-xxx...
 - **agent.ts**: Main orchestration loop with OpenAI function calling
 - **tools.ts**: Tool implementations (file writing, git operations, API calls)
 - **templates.ts**: React component code templates
+- **prompts.ts**: Prompts for the agent
 
 ## Tools Available
 
@@ -73,15 +77,13 @@ $ pnpm agent -k sk-or-v1-xxx...
 
 ## Models Supported
 
-Currently configured for: `anthropic/claude-3.5-sonnet`
+Currently configured for: `moonshotai/kimi-k2-thinking` and using provider `google-vertex`
 
 You can modify this in `agent.ts` if needed.
 
 ## Limitations
 
-- Book recommendations currently use mock data (integrate real API endpoint)
-- Requires manual book cover uploads for production
-- PR creation needs GITHUB_TOKEN environment variable
+- PR creation needs GITHUB_TOKEN environment variable and is not tested.
 
 ## Hackathon Notes
 

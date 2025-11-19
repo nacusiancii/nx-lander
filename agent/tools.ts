@@ -5,6 +5,7 @@ import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
 import { generatePageCode, generateSearchResultsUpdate, generateRouteUpdate } from './templates';
 import { prompts, toolDefinitions } from './prompts';
+import { GLOBAL_AI_MODEL, GLOBAL_AI_PROVIDER } from './agent';
 
 // Node.js 18+ has built-in fetch
 const fetch = globalThis.fetch;
@@ -304,13 +305,13 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
 
   try {
     const response = await client.chat.completions.create({
-      model: 'moonshotai/kimi-k2-thinking',
+      model: GLOBAL_AI_MODEL,
       messages,
       tools: tools as any,
       tool_choice: { type: 'function', function: { name: 'submit_keywords' } } as any,
       temperature: 0.7,
       provider: {
-        order: ['google-vertex'],
+        order: [GLOBAL_AI_PROVIDER],
         allow_fallbacks: false
       }
     } as any);
@@ -457,14 +458,14 @@ async function generateContent(theme: string, keywords: string[], books: any[], 
 
   try {
     const response = await client.chat.completions.create({
-      model: 'moonshotai/kimi-k2-thinking',
+      model: GLOBAL_AI_MODEL,
       messages,
       tools: tools as any,
       tool_choice: { type: 'function', function: { name: 'submit_content' } } as any,
       temperature: 0.7,
       max_tokens: 1536,
       provider: {
-        order: ['google-vertex'],
+        order: [GLOBAL_AI_PROVIDER],
         allow_fallbacks: false
       }
     } as any);
