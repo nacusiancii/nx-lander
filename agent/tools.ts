@@ -318,8 +318,9 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
     const toolCall = response.choices[0].message.tool_calls?.[0];
     if (toolCall && toolCall.function.name === 'submit_keywords') {
       const args = JSON.parse(toolCall.function.arguments);
-      console.log('AI generated keywords via tool call:', args.keywords);
-      return Array.isArray(args.keywords) ? args.keywords : [];
+      const keywords = [...args.keywords, theme.toLowerCase()];
+      console.log('AI generated keywords via tool call:', keywords);
+      return Array.isArray(keywords) ? keywords : [];
     }
 
     throw new Error('No tool call found in response');
