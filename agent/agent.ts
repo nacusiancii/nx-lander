@@ -56,7 +56,7 @@ async function runAgent(apiKey: string) {
       temperature: 0.7,
       max_tokens: 4096,
       provider: {
-        order: ['moonshotai/turbo'],
+        order: ['google-vertex'],
         allow_fallbacks: false
       }
     } as any);
