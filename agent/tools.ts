@@ -310,7 +310,7 @@ async function generateKeywords(theme: string, apiKey?: string): Promise<string[
       tool_choice: { type: 'function', function: { name: 'submit_keywords' } } as any,
       temperature: 0.7,
       provider: {
-        order: ['moonshotai/int4'],
+        order: ['moonshotai/turbo'],
         allow_fallbacks: false
       }
     } as any);
@@ -464,7 +464,7 @@ async function generateContent(theme: string, keywords: string[], books: any[], 
       temperature: 0.7,
       max_tokens: 1536,
       provider: {
-        order: ['moonshotai/int4'],
+        order: ['moonshotai/turbo'],
         allow_fallbacks: false
       }
     } as any);

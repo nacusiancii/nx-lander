@@ -56,7 +56,7 @@ async function runAgent(apiKey: string) {
       temperature: 0.7,
       max_tokens: 4096,
       provider: {
-        order: ['moonshotai/int4'],
+        order: ['moonshotai/turbo'],
         allow_fallbacks: false
       }
     } as any);
